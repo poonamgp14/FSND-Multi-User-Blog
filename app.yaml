@@ -5,10 +5,12 @@ threadsafe: true
 handlers:
 - url: /stylesheets
   static_dir: stylesheets
-  
+- url: /javaScript
+  static_dir: javaScript
+
 - url: /.*
   script: main.app
-  
+
 libraries:
 - name: jinja2
   version: latest
