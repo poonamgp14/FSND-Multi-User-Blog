@@ -1,0 +1,13 @@
+{% extends "index.html" %}
+{% block blogListBlock %}
+    {% if blogsList %}
+        {% for blog in blogsList %}
+            <div class="blog-container">
+                <span> {{blog.user}} </span>
+                <span class="right"> {{blog.date}} </span>
+                <hr>
+                <p> {{blog.content}} </p>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

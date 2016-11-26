@@ -1,0 +1,15 @@
+{% extends "login.html" %}
+{% block title %} 
+    Welcome Page
+{% endblock %}
+{% block WelcomeContent %}
+    <form  action = "/newBlogForm">
+        <div>
+            <button> Post a new blog! </button>
+        </div>
+    </form>
+    <div id="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+{% endblock %}
