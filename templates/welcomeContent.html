@@ -1,0 +1,9 @@
+{% extends "welcome.html" %}
+{% block welcomeContent %}
+	<div id="blog-list">
+		{% block blogListBlock %} {% endblock %}
+	</div>
+	{% if noBlogs %}
+		{{noBlogs}}
+	% endif %}
+{% endblock %}

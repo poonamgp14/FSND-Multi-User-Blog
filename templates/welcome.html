@@ -2,8 +2,8 @@
 {% block title %}
     Welcome Page
 {% endblock %}
-{% block WelcomeContent %}
-    <header class="header">
+{% block content %}
+    <nav class="header">
         <a href="#"> Welcome, username!</a>
         <form  action = "" id="logout" class="right">
             <div>
@@ -15,9 +15,9 @@
                 <button> Post a new blog! </button>
             </div>
         </form>
-    </header>
-    <div id="content">
-        {% block content %}
+    </nav>
+    <div id="welcome-content">
+        {% block welcomeContent %}
         {% endblock %}
     </div>
 {% endblock %}

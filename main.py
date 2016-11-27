@@ -12,14 +12,14 @@ jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir)
 
 class handler(webapp2.RequestHandler):
 	"""This is the handler class for handling jinja2 template"""
-	
+
 	def write(self,*a,**kw):
 		"""This will write response back to our browser(client)"""
-		self.response.out.write(*a,**kw) 
+		self.response.out.write(*a,**kw)
 
 	#functions for rendering basic templates
 	def render_str(self,template,**params):
-		"""This calls jinja template we specify and 
+		"""This calls jinja template we specify and
 		returns template in form of a string.
 		"""
 		t = jinja_env.get_template(template)
@@ -27,13 +27,13 @@ class handler(webapp2.RequestHandler):
 
 	def render(self,template, **kw):
 		"""Main method to call from get methods"""
-	
+
 		self.write(self.render_str(template,**kw))
-        
+
 class UserRegister(handler):
     def get(self):
         self.render("login.html")
-        
+
 
 class MainPage(handler):
     def get(self):
@@ -44,7 +44,7 @@ class MainPage(handler):
                 self.eachPost = {'user':self.post.username,'content': self.post.content,
                                 'date': self.post.createdTime
                                 }
-                blogsList.append(self.eachPost)  
+                blogsList.append(self.eachPost)
             self.render("welcome.html",blogsList=blogsList)
         else:
 			self.render("welcome.html", noBlogs='There are no blogs posted yet!')
@@ -52,7 +52,7 @@ class MainPage(handler):
 class NewBlogForm(handler):
     def get(self):
         self.render("newblogForm.html")
-    
+
     def post(self):
         self.userName = self.request.get("UserName")
         self.emailId = self.request.get("EmailID")
@@ -64,7 +64,7 @@ class NewBlogForm(handler):
             self.postKey = self.post.put()
             postId = self.postKey.id()
             self.redirect("/%d" % postId)
-            
+
 class NewBlog(handler):
     def get(self):
         url = urlparse(self.request.path)
@@ -73,7 +73,7 @@ class NewBlog(handler):
         self.render("blogPost.html", blogsList=[{'user':newBlog.username,'content': newBlog.content,
                                 'date': newBlog.createdTime
                                 }])
-        
+
 
 app = webapp2.WSGIApplication([
     ('/welcome', MainPage),

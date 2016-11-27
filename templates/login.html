@@ -2,7 +2,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title> Poonam's Blog</title>
+    <title>{% block title %}{% endblock %} Poonam's Blog</title>
     <link rel="stylesheet" type="text/css" href="../stylesheets/style.css">
     <link rel="stylesheet" type="text/css" href="../stylesheets/demo.css" />
     <link rel="stylesheet" type="text/css" href="../stylesheets/animate-custom.css" />
@@ -65,11 +65,11 @@
     </div>
     </div>
   </div>
-  <div id="welcome-content">
-        {% block WelcomeContent %}
+  <div id="content">
+        {% block content %}
         {% endblock %}
     </div>
-    <footer id="footer" class="header">
+    <footer id="footer">
         <strong>© Copyright 2016 by Poonam</strong>
     </footer>
 <script src="../javaScript/app.js"></script>
