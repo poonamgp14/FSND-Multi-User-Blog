@@ -135,7 +135,8 @@ class WelcomePage(handler):
 										email=self.email,
 										password=self.pwHashed)
 						self.postKey = self.user.put()
-						self.renderAllPosts(self.name)
+						self.redirect('/welcome')
+						#self.renderAllPosts(self.name)
 					else:
 						self.render("signup.html",error='Both of the passwords should be same')
 		else:
