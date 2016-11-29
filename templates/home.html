@@ -1,0 +1,30 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}{% endblock %} Poonam's Blog</title>
+    <link rel="stylesheet" type="text/css" href="../stylesheets/style.css">
+</head>
+
+<body>
+    <div id="container-login">
+    <form  action = "/signup">
+            <div>
+                <button> Sign-Up! </button>
+            </div>
+        </form>
+        <form  action = "/login">
+            <div>
+                <button> Log-In! </button>
+            </div>
+        </form>
+  </div>
+  <div id="content">
+        {% block content %}
+        {% endblock %}
+    </div>
+    <footer id="footer">
+        <strong>© Copyright 2016 by Poonam</strong>
+    </footer>
+</body>
+</html>

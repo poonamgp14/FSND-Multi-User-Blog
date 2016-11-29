@@ -1,10 +1,10 @@
-{% extends "login.html" %}
+{% extends "home.html" %}
 {% block title %}
     Welcome Page
 {% endblock %}
 {% block content %}
     <nav class="header">
-        <a href="#"> Welcome, username!</a>
+        <a href="#"> Welcome, {{user}}</a>
         <form  action = "" id="logout" class="right">
             <div>
                 <button> Log Out! </button>
