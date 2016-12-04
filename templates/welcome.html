@@ -1,23 +1,8 @@
-{% extends "home.html" %}
-{% block title %}
-    Welcome Page
-{% endblock %}
-{% block content %}
-    <nav class="header">
-        <a href="#"> Welcome, {{user}}</a>
-        <form  action = "" id="logout" class="right">
-            <div>
-                <button> Log Out! </button>
-            </div>
-        </form>
-        <form  action = "/newBlogForm">
-            <div>
-                <button> Post a new blog! </button>
-            </div>
-        </form>
-    </nav>
-    <div id="welcome-content">
-        {% block welcomeContent %}
-        {% endblock %}
-    </div>
-{% endblock %}
+<div>
+	<a href="#"> Welcome, {{user}}</a>
+	<form  action = "/blog" id="logout" class="right">
+		<div>
+			<button> Go to Blogs </button>
+		</div>
+	</form>
+</div>

@@ -1,14 +1,21 @@
 from google.appengine.ext import ndb
 
+# The form input boxes must have the names 'subject' and
+# 'content' in order for the grading script to correctly post to them.
 class Posts(ndb.Model):
     content = ndb.TextProperty(indexed=False, required=True)
     createdTime = ndb.DateTimeProperty(auto_now=True)
     username = ndb.StringProperty(required=True)
-    email = ndb.StringProperty(required=True,indexed=False)
-
-
-#p1 = Posts(content='This is my first blog', username='x', email='xyz@abc.com')
-#p1.put()
+    subject = ndb.StringProperty(required=True,indexed=False)
+    totalLikes = ndb.IntegerProperty(default = 0)
+    totalUnlikes = ndb.IntegerProperty(default = 0)
+    isLikable = ndb.BooleanProperty(default = False)
+    isUnlikable = ndb.BooleanProperty(default = False)
+    isCommentable = ndb.BooleanProperty(default = True)
+    isEditable = ndb.BooleanProperty(default = True)
+    isDeletable = ndb.BooleanProperty(default = True)
+    likedBy = ndb.JsonProperty(required=False,default={})
+    unlikedBy = ndb.JsonProperty(required=False,default={})
 
 class Users(ndb.Model):
 	name = ndb.StringProperty(required=True)
@@ -16,17 +23,8 @@ class Users(ndb.Model):
 	email = ndb.StringProperty(required=True,indexed=True)
 	createdTime = ndb.DateTimeProperty(auto_now=True)
 
-	# @classmethos
-	# def makeSalt():
-	# 	return ''.join(random.choice(string.letters) for x in range(5))
 
-	# def makePwHash(name,pw,salt=None):
-	# 	if not salt:
-	# 		salt=make_salt()
-	# 	h = hashlib.sha256(name+pw+salt).hexdigest()
-	# 	return '%s,%s' % (h,salt)
 
-	# #check at the time of login
-	# def validPw(name, pw, h):
-	# 	salt = h.split(',')[1]
-	# 	return h == makePwHash(name,pw,salt)
+class Comments(ndb.Model):
+	author = ndb.StringProperty(required=True)
+	content = ndb.TextProperty(indexed=False, required=True)

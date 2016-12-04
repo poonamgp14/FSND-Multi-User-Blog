@@ -9,6 +9,8 @@ import random
 import string
 import hashlib
 import hmac
+import time
+import ast
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir)
@@ -63,33 +65,10 @@ class handler(webapp2.RequestHandler):
 		#return cookie_val and self.check_secure_val(cookie_val)
 		return self.check_secure_val(self.cookie_val)
 
-
-	def renderAllPosts(self,username):
-		blogsList = []
-		self.posts = BlogDB.Posts.query().order(-BlogDB.Posts.createdTime)
-		if self.posts:
-			for self.post in self.posts:
-				self.eachPost = {'user':self.post.username,'content': self.post.content,'date': self.post.createdTime}
-				blogsList.append(self.eachPost)
-			securedUserName = self.make_secure_val(username)
-			print(securedUserName)
-			self.response.headers.add_header('Set-Cookie','user=%s' % str(securedUserName))
-			self.render("blogPost.html",blogsList=blogsList, user=securedUserName.split('|')[0])
-
-	def handlelogin(self):
-		self.loginName = self.request.get("username")
-		self.loginpw = self.request.get("password")
-		if self.loginName and self.loginpw:
-			#check if user already exists
-			query = BlogDB.Users.query(ndb.AND(BlogDB.Users.name == self.loginName)).fetch()
-			#print(query)
-			if query:
-				if not self.validPw(self.loginName,self.loginpw,query[0].password):
-					self.render("login.html",error='Username and/or password doesnot match with our records')
-				else:
-					self.renderAllPosts(self.loginName)
-			else:
-				self.render("login.html",error='Invalid Username')
+	def setCookie(self, username):
+		securedUserName = self.make_secure_val(username)
+		print(securedUserName)
+		self.response.headers.add_header('Set-Cookie','user=%s' % str(securedUserName))
 
 
 #implement if user cookie is available then land on welcome page
@@ -101,9 +80,55 @@ class SignUp(handler):
 	def get(self):
 		self.render("signup.html")
 
+	def post(self):
+		self.name = self.request.get("usernamesignup")
+		self.email = self.request.get("emailsignup")
+		self.pw = self.request.get("passwordsignup")
+		self.pwVerify = self.request.get("passwordsignup_confirm")
+
+		if self.name and self.email and self.pw:
+			#check if username and email id already exists
+			query = BlogDB.Users.query(ndb.AND(BlogDB.Users.name == self.name, BlogDB.Users.email ==self.email)).fetch()
+			#print(query)
+			if query:
+				self.render("signup.html",error='This user already exists')
+			else:
+				if self.pw == self.pwVerify:
+					self.pwHashed = self.makePwHash(self.name,self.pw)
+					print(self.pwHashed)
+					self.user = BlogDB.Users(name=self.name,
+										email=self.email,
+										password=self.pwHashed)
+					self.postKey = self.user.put()
+					self.setCookie(self.name)
+					self.redirect('/welcome')
+				else:
+					self.render("signup.html",error='Both of the passwords should be same')
+
 class LogIn(handler):
 	def get(self):
 		self.render("login.html")
+
+	def post(self):
+		self.loginName = self.request.get("username")
+		self.loginpw = self.request.get("password")
+		if self.loginName and self.loginpw:
+			#check if user already exists
+			query = BlogDB.Users.query(ndb.AND(BlogDB.Users.name == self.loginName)).fetch()
+			#print(query)
+			if query:
+				if not self.validPw(self.loginName,self.loginpw,query[0].password):
+					self.render("login.html",error='Username and/or password doesnot match with our records')
+				else:
+					self.setCookie(self.loginName)
+					self.redirect('/welcome')
+			else:
+				self.render("login.html",error='Invalid Username')
+
+class Logout(handler):
+	def get(self):
+		self.response.headers.add_header('Set-Cookie', 'user=')
+		self.redirect('/')
 
 class WelcomePage(handler):
 	def get(self):
@@ -111,66 +136,118 @@ class WelcomePage(handler):
 		if not self.checkUser:
 			self.render("home.html")
 		else:
-			self.renderAllPosts(self.request.cookies.get('user').split('|')[0])
+			self.render("welcome.html",user=self.request.cookies.get('user').split('|')[0])
 
+class BlogPage(handler):
+	def get(self):
+		blogsList = []
+		name = self.request.cookies.get('user').split('|')[0]
+		self.posts = BlogDB.Posts.query().order(-BlogDB.Posts.createdTime)
+		if self.posts:
+			for self.post in self.posts:
+				self.eachPost = {
+				'user':self.post.username,
+				'content': self.post.content,
+				'subject': self.post.subject,
+				'date': self.post.createdTime,
+				'likes':self.post.totalLikes,
+				'unlikes': self.post.totalUnlikes,
+				'id': self.post.key.id(),
+				'isLikable': self.post.isLikable if self.post.username == name or name in self.post.likedBy else True,
+				'isUnlikable': self.post.isUnlikable if self.post.username == name or name in self.post.unlikedBy else True,
+				'isEditable' : self.post.isEditable if self.post.username == name else False,
+				'isDeletable' : self.post.isDeletable if self.post.username == name else False
+				}
+				blogsList.append(self.eachPost)
+			self.render("blogPost.html",blogsList=blogsList, user={'name':name})
 
-	def post(self):
-		self.name = self.request.get("usernamesignup")
-		if self.name:
-			self.email = self.request.get("emailsignup")
-			self.pw = self.request.get("passwordsignup")
-			self.pwVerify = self.request.get("passwordsignup_confirm")
-
-			if self.name and self.email and self.pw:
-				#check if username and email id already exists
-				query = BlogDB.Users.query(ndb.AND(BlogDB.Users.name == self.name, BlogDB.Users.email ==self.email)).fetch()
-				#print(query)
-				if query:
-					self.render("signup.html",error='This user already exists')
-				else:
-					if self.pw == self.pwVerify:
-						self.pwHashed = self.makePwHash(self.name,self.pw)
-						print(self.pwHashed)
-						self.user = BlogDB.Users(name=self.name,
-										email=self.email,
-										password=self.pwHashed)
-						self.postKey = self.user.put()
-						self.redirect('/welcome')
-						#self.renderAllPosts(self.name)
-					else:
-						self.render("signup.html",error='Both of the passwords should be same')
-		else:
-			self.handlelogin()
 
 class NewBlogForm(handler):
 	def get(self):
 		self.render("newblogForm.html")
 
 	def post(self):
-		self.userName = self.request.get("UserName")
-		self.emailId = self.request.get("EmailID")
+		self.userName = self.request.cookies.get('user').split('|')[0]
+		self.subject = self.request.get("subject")
 		self.content = self.request.get("Content")
-		if self.userName and self.emailId and self.content:
+		if self.userName and self.subject and self.content:
 			self.post = BlogDB.Posts(username=self.userName,
-								email=self.emailId,
+								subject=self.subject,
 								content=self.content)
+			self.post.likedBy = {'hello': 1}
 			self.postKey = self.post.put()
 			postId = self.postKey.id()
-			self.redirect("/%d" % postId)
+			self.redirect("/blog/%d" % postId)
 
 class NewBlog(handler):
 	def get(self):
 		url = urlparse(self.request.path)
-		newBlog = BlogDB.Posts.get_by_id(int(url[2][1:]))
-		self.render("blogPost.html", blogsList=[{'user':newBlog.username,'content': newBlog.content,
-								'date': newBlog.createdTime
-								}])
+		newBlog = BlogDB.Posts.get_by_id(int(url[2][6:]))
+		name = self.request.cookies.get('user').split('|')[0]
+		self.render("blogPostComment.html", blogsList=[
+			{
+			'user':newBlog.username,
+			'content': newBlog.content,
+			'subject': newBlog.subject,
+			'date': newBlog.createdTime,
+			'likes':newBlog.totalLikes,
+			'unlikes': newBlog.totalUnlikes,
+			'id': newBlog.key.id(),
+			'isLikable': newBlog.isLikable if newBlog.username == name or name in newBlog.likedBy else True,
+			'isUnlikable': newBlog.isUnlikable if newBlog.username == name or name in newBlog.unlikedBy else True,
+			'isEditable' : newBlog.isEditable if newBlog.username == name else False,
+			'isDeletable' : newBlog.isDeletable if newBlog.username == name else False
+			}],user={'name':name})
+
+	def post(self):
+		newContent = self.request.get('newPostContent')
+		# print(newContent)
+		url = urlparse(self.request.path)
+		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:]))
+		blogToUpdate.content = newContent
+		blogToUpdate.put()
+		time.sleep(.1)
+		self.redirect('/blog')
+
+class LikedPost(handler):
+	def post(self):
+		# query the post with id from url and save the new number of likes
+		#rerender the blog url to refresh the whole page
+		url = urlparse(self.request.path)
+		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-5]))
+		blogToUpdate.totalLikes = blogToUpdate.totalLikes + 1
+		blogToUpdate.likedBy[self.request.cookies.get('user').split('|')[0]] = 1
+		blogToUpdate.put()
+		time.sleep(.1)
+		self.redirect('/blog')
+
+class UnlikedPost(handler):
+	def post(self):
+		url = urlparse(self.request.path)
+		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
+		blogToUpdate.totalUnlikes = blogToUpdate.totalUnlikes + 1
+		blogToUpdate.unlikedBy[self.request.cookies.get('user').split('|')[0]] = 1
+		blogToUpdate.put()
+		time.sleep(.1)
+		self.redirect('/blog')
+
+class DeletePost(handler):
+	def post(self):
+		url = urlparse(self.request.path)
+		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
+		print(blogToUpdate)
+		blogToUpdate.key.delete()
+		time.sleep(.1)
+		self.redirect('/blog')
+
 
 
 app = webapp2.WSGIApplication([
 	('/welcome', WelcomePage),
 	('/', HomePage),
 	('/signup',SignUp),('/login', LogIn),
-	('/newBlogForm', NewBlogForm),
-	('/[0-9]+',NewBlog)
+	('/blog/newpost', NewBlogForm),
+	('/blog/[0-9]+',NewBlog),('/logout', Logout),('/blog',BlogPage),
+	('/blog/[0-9]+/like',LikedPost),('/blog/[0-9]+/unlike',UnlikedPost),
+	('/blog/[0-9]+/delete',DeletePost)
 ], debug=True)

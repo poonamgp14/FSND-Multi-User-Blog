@@ -1,0 +1,27 @@
+{% extends "home.html" %}
+{% block title %}
+    Forum
+{% endblock %}
+{% block content %}
+    <nav class="header">
+        <a href="#"> Hello, {{user.name}}</a>
+        <form  action = "/logout" id="logout" class="right">
+            <div>
+                <button> Log Out! </button>
+            </div>
+        </form>
+        <form  action = "/blog/newpost">
+            <div>
+                <button> Post a new blog! </button>
+            </div>
+        </form>
+    </nav>
+    <div id="blog-content">
+        {% block blogContent %}
+        {% endblock %}
+    </div>
+    <div id='comments-on-post'>
+        {% block commentBlock %}
+        {% endblock %}
+    </div>
+{% endblock %}

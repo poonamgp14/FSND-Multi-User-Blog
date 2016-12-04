@@ -1,21 +1,16 @@
-<form method="post" action="/newBlogForm" >
+<form method="post" action="/blog/newpost" >
     <div>
-        Name(required): 
+        Subject(required):
         <br>
-        <input type="text" name = "UserName" size="35" required>
+        <input type="text" name = "subject" size="50" required>
     </div>
     <div>
-        Email(required):
-        <br>
-        <input type="email" name = "EmailID" size="50" required>
-    </div>
-    <div>
-        Comment(required):
+        Content(required):
         <br>
         <textarea name="Content" rows="4" cols="70" style="height:70px;" required></textarea>
     </div>
     <input type="submit" value="Post Comment" style="background-color:red;">
-    
+
     <div>
         <h4>{{error}}</h4>
     </div>

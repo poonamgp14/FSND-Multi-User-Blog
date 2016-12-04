@@ -1,12 +1,52 @@
-{% extends "welcomeContent.html" %}
+{% extends "blogContent.html" %}
 {% block blogListBlock %}
     {% if blogsList %}
         {% for blog in blogsList %}
             <div class="blog-container">
                 <span> {{blog.user}} </span>
-                <span class="right"> {{blog.date}} </span>
+                <span class="right" id="edit-del">
+                    <button class={{' btn red' if blog.isEditable else 'btn disabled'}} onClick='editClicked({{blog.id}})'>Edit
+                        <span class="glyphicon glyphicon-edit"></span>
+                    </button>
+                    <form method="post" action = "/blog/{{blog.id}}/delete" class="left-margin">
+                    <button class={{' btn red' if blog.isDeletable else 'btn disabled'}}>Delete
+                        <span class="glyphicon glyphicon-remove-sign">
+                        </span>
+                    </button>
+                </form>
+                </span>
                 <hr>
-                <p> {{blog.content}} </p>
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h1 class="panel-title">
+                            {{blog.subject}}
+                        </h1>
+                    </div>
+                    <div class="panel-body" id="{{blog.id}}">
+                        {{blog.content}}
+                    </div>
+                    <div class="panel-footer">
+                        <span id="like-unlike">
+                                <form  method="post" action = "/blog/{{blog.id}}/like" class="right-margin">
+                                    <button class={{'btn red' if blog.isLikable else 'btn disabled'}}> Like </button>
+                                    <span class="badge">{{blog.likes}}</span>
+                                </form>
+                                <form  method="post" action = "/blog/{{blog.id}}/unlike">
+                                    <button class={{'btn red' if blog.isUnlikable else 'btn disabled'}}> Unlike </button>
+                                    <span class="badge">{{blog.unlikes}}</span>
+                                </form>
+                            </span>
+
+                        <span class="left-margin right">
+                            <form method="get" action = "/blog/{{blog.id}}">
+                                <button class="btn"> Add a Comment
+                                    <span class="glyphicon glyphicon-comment"></span>
+                                </button>
+                            </form>
+                        </span>
+                    </div>
+                </div>
+                <hr>
             </div>
         {% endfor %}
     {% endif %}

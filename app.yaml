@@ -6,6 +6,9 @@ handlers:
 - url: /stylesheets
   static_dir: stylesheets
 
+- url: /javaScript
+  static_dir: javaScript
+
 - url: /.*
   script: main.app
 
