@@ -3,7 +3,7 @@
 	{% if previousComments %}
 		{% for comment in previousComments %}
 		<div class="comment-container">
-			<span class="comment-user">{{comment.author}}</span>
+			<span class="comment-user"><strong>{{comment.author}}</strong></span>
 			<span class="right edit-del">
 				<button class={{'btn-sm' if comment.isEditable else 'btn disabled'}} onClick='editCommentClicked({{comment.id}})'>Edit
 					<span class="glyphicon glyphicon-edit"></span>

@@ -1,8 +1,14 @@
-<div>
-	<a href="#"> Welcome, {{user}}</a>
-	<form  action = "/blog" id="logout" class="right">
-		<div>
-			<button> Go to Blogs </button>
-		</div>
-	</form>
-</div>
+{% extends "home.html" %}
+{% block title %}
+	Welcome
+{% endblock %}
+{% block content %}
+	<div>
+		<a href="#"> Welcome, {{user}}</a>
+		<form  action = "/blog">
+			<div>
+				<button class="btn btn-primary"> Go to Blogs </button>
+			</div>
+		</form>
+	</div>
+{% endblock %}
