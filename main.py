@@ -159,6 +159,7 @@ class BlogPage(handler):
 				'isDeletable' : self.post.isDeletable if self.post.username == name else False
 				}
 				blogsList.append(self.eachPost)
+			print(blogsList)
 			self.render("blogPost.html",blogsList=blogsList, user={'name':name})
 
 
@@ -174,7 +175,7 @@ class NewBlogForm(handler):
 			self.post = BlogDB.Posts(username=self.userName,
 								subject=self.subject,
 								content=self.content)
-			self.post.likedBy = {'hello': 1}
+			# self.post.likedBy = {'hello': 1}
 			self.postKey = self.post.put()
 			postId = self.postKey.id()
 			self.redirect("/blog/%d" % postId)
@@ -184,6 +185,7 @@ class NewBlog(handler):
 		url = urlparse(self.request.path)
 		newBlog = BlogDB.Posts.get_by_id(int(url[2][6:]))
 		name = self.request.cookies.get('user').split('|')[0]
+		commentResults = BlogDB.Comments.query(ndb.AND(BlogDB.Comments.postId == url[2][6:])).fetch()
 		self.render("blogPostComment.html", blogsList=[
 			{
 			'user':newBlog.username,
@@ -197,17 +199,38 @@ class NewBlog(handler):
 			'isUnlikable': newBlog.isUnlikable if newBlog.username == name or name in newBlog.unlikedBy else True,
 			'isEditable' : newBlog.isEditable if newBlog.username == name else False,
 			'isDeletable' : newBlog.isDeletable if newBlog.username == name else False
-			}],user={'name':name})
+			}],
+			user={'name':name},
+			previousComments=[
+									{'author': comment.author,
+									'content': comment.content,
+									'id': comment.key.id(),
+									'postId': comment.postId,
+									'isEditable': comment.isEditable if comment.author == name else False,
+									'isDeletable': comment.isDeletable if comment.author == name else False
+									} for comment in commentResults])
 
 	def post(self):
-		newContent = self.request.get('newPostContent')
-		# print(newContent)
-		url = urlparse(self.request.path)
-		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:]))
-		blogToUpdate.content = newContent
-		blogToUpdate.put()
-		time.sleep(.1)
-		self.redirect('/blog')
+		self.ifContentOrComment = self.request.get('submitEditedText')
+		if self.ifContentOrComment:
+			newContent = self.request.get('newPostContent')
+			url = urlparse(self.request.path)
+			blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:]))
+			blogToUpdate.content = newContent
+			blogToUpdate.put()
+			time.sleep(.1)
+			self.redirect('/blog')
+		else:
+			url = urlparse(self.request.path)
+			self.postId = url[2][6:]
+			self.commentContent= self.request.get('postAComment')
+			self.comment = BlogDB.Comments(author=self.request.cookies.get('user').split('|')[0],
+								content=self.commentContent,
+								postId=self.postId)
+			self.commentKey = self.comment.put()
+			time.sleep(.1)
+			self.redirect('/blog/%d' % int(self.postId))
+
 
 class LikedPost(handler):
 	def post(self):
@@ -235,10 +258,27 @@ class DeletePost(handler):
 	def post(self):
 		url = urlparse(self.request.path)
 		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
-		print(blogToUpdate)
 		blogToUpdate.key.delete()
 		time.sleep(.1)
 		self.redirect('/blog')
+
+class DeleteComment(handler):
+	def post(self):
+		url = urlparse(self.request.path)
+		commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-7]))
+		commentToUpdate.key.delete()
+		time.sleep(.1)
+		self.redirect('/blog/%d' % int(commentToUpdate.postId))
+
+class EditComment(handler):
+	def post(self):
+		newContent = self.request.get('newCommentContent')
+		url = urlparse(self.request.path)
+		commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-5]))
+		commentToUpdate.content = newContent
+		commentToUpdate.put()
+		time.sleep(.1)
+		self.redirect('/blog/%d' % int(commentToUpdate.postId))
 
 
 
@@ -249,5 +289,6 @@ app = webapp2.WSGIApplication([
 	('/blog/newpost', NewBlogForm),
 	('/blog/[0-9]+',NewBlog),('/logout', Logout),('/blog',BlogPage),
 	('/blog/[0-9]+/like',LikedPost),('/blog/[0-9]+/unlike',UnlikedPost),
-	('/blog/[0-9]+/delete',DeletePost)
+	('/blog/[0-9]+/delete',DeletePost),('/blog/comment/[0-9]+/edit',EditComment)
+	,('/blog/comment/[0-9]+/delete',DeleteComment)
 ], debug=True)

@@ -28,3 +28,6 @@ class Users(ndb.Model):
 class Comments(ndb.Model):
 	author = ndb.StringProperty(required=True)
 	content = ndb.TextProperty(indexed=False, required=True)
+	postId = ndb.StringProperty(required=True, indexed=True)
+	isEditable = ndb.BooleanProperty(default = True)
+	isDeletable = ndb.BooleanProperty(default = True)

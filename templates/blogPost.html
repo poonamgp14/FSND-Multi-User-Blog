@@ -4,12 +4,12 @@
         {% for blog in blogsList %}
             <div class="blog-container">
                 <span> {{blog.user}} </span>
-                <span class="right" id="edit-del">
-                    <button class={{' btn red' if blog.isEditable else 'btn disabled'}} onClick='editClicked({{blog.id}})'>Edit
+                <span class="right edit-del">
+                    <button class={{'btn' if blog.isEditable else 'btn disabled'}} onClick='editClicked({{blog.id}})'>Edit
                         <span class="glyphicon glyphicon-edit"></span>
                     </button>
                     <form method="post" action = "/blog/{{blog.id}}/delete" class="left-margin">
-                    <button class={{' btn red' if blog.isDeletable else 'btn disabled'}}>Delete
+                    <button class={{'btn' if blog.isDeletable else 'btn disabled'}}>Delete
                         <span class="glyphicon glyphicon-remove-sign">
                         </span>
                     </button>
@@ -26,7 +26,7 @@
                         {{blog.content}}
                     </div>
                     <div class="panel-footer">
-                        <span id="like-unlike">
+                        <span class="like-unlike">
                                 <form  method="post" action = "/blog/{{blog.id}}/like" class="right-margin">
                                     <button class={{'btn red' if blog.isLikable else 'btn disabled'}}> Like </button>
                                     <span class="badge">{{blog.likes}}</span>
@@ -45,6 +45,10 @@
                             </form>
                         </span>
                     </div>
+                </div>
+                <div id='comments-on-post-{{blog.id}}'>
+                    {% block commentBlock %}
+                    {% endblock %}
                 </div>
                 <hr>
             </div>

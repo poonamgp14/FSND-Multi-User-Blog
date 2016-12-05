@@ -1,5 +1,25 @@
 {% extends "blogPost.html" %}
 {% block commentBlock %}
-	<textarea rows="4" cols="50" placeholder="Add a comment here">
-	</textarea>
+	{% if previousComments %}
+		{% for comment in previousComments %}
+		<div class="comment-container">
+			<span class="comment-user">{{comment.author}}</span>
+			<span class="right edit-del">
+				<button class={{'btn-sm' if comment.isEditable else 'btn disabled'}} onClick='editCommentClicked({{comment.id}})'>Edit
+					<span class="glyphicon glyphicon-edit"></span>
+				</button>
+				<form method="post" action = "/blog/comment/{{comment.id}}/delete" class="left-margin display-flex">
+					<button class={{'btn-sm' if comment.isDeletable else 'btn disabled'}}> Delete
+						<span class="glyphicon glyphicon-remove-sign"></span>
+					</button>
+				</form>
+			</span>
+			<div id="{{comment.id}}">{{comment.content}}</div>
+			</div>
+		{% endfor %}
+	{% endif %}
+	<form method="post" action="">
+		<input type="text" name="postAComment" placeholder="Add a comment here" maxlength="100" size="100" >
+		<input type="submit" value="Post Comment">
+	</form>
 {% endblock %}
