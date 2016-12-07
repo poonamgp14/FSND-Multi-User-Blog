@@ -12,15 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import webtest
+# import webtest
 
-import main
+# import main
 
 
-def test_get():
-    app = webtest.TestApp(main.app)
+# def test_get():
+#     app = webtest.TestApp(main.app)
 
-    response = app.get('/')
+#     response = app.get('/')
 
-    assert response.status_int == 200
-    assert response.body == 'Hello, World!'
+#     assert response.status_int == 200
+#     assert response.body == 'Hello, World!'
+
+import hashlib
+import hmac
+val='pgupta'
+secret = 'Haeligmat'
+print(val, hmac.new(secret, val).hexdigest())

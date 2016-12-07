@@ -1,6 +1,3 @@
-<head>
-    <link rel="stylesheet" type="text/css" href="../stylesheets/style.css">
-</head>
 <div id="register" class="animate form">
       <form action="/signup" method="post"  autocomplete="on">
         <h1> Sign up </h1>
@@ -21,10 +18,14 @@
           <input id="passwordsignup_confirm" name="passwordsignup_confirm" required="required" type="password" placeholder="eg. X8df!90EO"/>
         </p>
         <p class="error">{{error}}</p>
-        <!-- <p class="change_link">
-          Already a member ?
-          <a href="#tologin" class="to_register"> Go and log in </a>
-        </p> -->
+
         <input type="submit" value="SignUp" />
       </form>
+      <p class="change_link">
+        <strong>Already a member ?</strong>
+        <form  action = "/login">
+        <button> Log-In!</button>
+      </form>
+      </p>
+
     </div>

@@ -39,9 +39,23 @@ body,html{
   position: fixed;
   /*position:absolute;*/
   width:100%;
-  height:60px;   /* Height of the footer */
+  height:50px;
   background-color:black;
   color: white;
+}
+
+.nav-user{
+  position:relative;
+  width:30%;
+  margin:0;
+  display: inline;
+  top:40%;
+}
+
+.nav-form{
+  position:relative;
+  top:15%;
+  display: flex;
 }
 
 .error{
@@ -50,7 +64,7 @@ body,html{
 }
 
 #blog-content{
-  margin-top: 50px;
+  margin-top: 70px;
 }
 
 .red{
@@ -73,7 +87,7 @@ a, u {
   margin-left: 30px;
 }
 
-.like-unlike,.edit-del, .panel-footer, #container-login{
+.like-unlike,.edit-del, .panel-footer, #container-login, .nav-span{
   display: flex;
 }
 
@@ -89,6 +103,6 @@ a, u {
 
 .comment-container input{
   line-height: 30px;
-  margin-top:20px;
+  margin-top:30px;
 }
 

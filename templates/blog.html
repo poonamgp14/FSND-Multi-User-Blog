@@ -4,17 +4,15 @@
 {% endblock %}
 {% block content %}
     <nav class="header">
-        <a href="#"> Hello, {{user.name}}</a>
-        <form  action = "/logout" id="logout" class="right">
-            <div>
-                <button> Log Out! </button>
-            </div>
+        <h2 class="nav-user right-margin"> Hello, {{user.name}} !</h2>
+        <span class="nav-form right">
+        <form  action = "/blog/newpost" class="right-margin">
+            <button class="btn btn-warning"> Post a new blog! </button>
         </form>
-        <form  action = "/blog/newpost">
-            <div>
-                <button> Post a new blog! </button>
-            </div>
+        <form  action = "/logout" id="logout">
+            <button class="btn btn-danger"> Log Out! </button>
         </form>
+        </span>
     </nav>
     <div id="blog-content">
         {% block blogContent %}
