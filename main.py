@@ -344,10 +344,10 @@ class EditComment(handler):
 app = webapp2.WSGIApplication([
 	('/welcome', WelcomePage),
 	('/', HomePage),
-	('/signup',SignUp),('/login', LogIn),
+	('/signup', SignUp),('/login', LogIn),
 	('/blog/newpost', NewBlogForm),
-	('/blog/[0-9]+',NewBlog),('/logout', Logout),('/blog',BlogPage),
-	('/blog/[0-9]+/like',LikedPost),('/blog/[0-9]+/unlike',UnlikedPost),
-	('/blog/[0-9]+/delete',DeletePost),('/blog/comment/[0-9]+/edit',EditComment)
-	,('/blog/comment/[0-9]+/delete',DeleteComment)
+	('/blog/[0-9]+', NewBlog),('/logout', Logout),('/blog', BlogPage),
+	('/blog/[0-9]+/like', LikedPost),('/blog/[0-9]+/unlike', UnlikedPost),
+	('/blog/[0-9]+/delete', DeletePost),('/blog/comment/[0-9]+/edit', EditComment)
+	,('/blog/comment/[0-9]+/delete', DeleteComment)
 ], debug=True)
