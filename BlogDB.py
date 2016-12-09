@@ -15,7 +15,7 @@ class Posts(ndb.Model):
     isEditable = ndb.BooleanProperty(default = True)
     isDeletable = ndb.BooleanProperty(default = True)
     likedBy = ndb.JsonProperty(required=False,default={})
-    unlikedBy = ndb.JsonProperty(required=False,default={})
+    unlikedBy=ndb.JsonProperty(required=False,default={})
 
 class Users(ndb.Model):
 	name = ndb.StringProperty(required=True)

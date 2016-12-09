@@ -62,8 +62,13 @@ class handler(webapp2.RequestHandler):
 
 	def evaluateCookie(self, cookieName):
 		self.cookie_val = self.request.cookies.get(cookieName)
-		#return cookie_val and self.check_secure_val(cookie_val)
-		return self.check_secure_val(self.cookie_val)
+		# print(self.cookie_val)
+		ifUserValid =  self.check_secure_val(self.cookie_val)
+		# print(ifUserValid)
+		if ifUserValid:
+			return self.request.cookies.get('user').split('|')[0]
+		else:
+			return False
 
 	def setCookie(self, username):
 		securedUserName = self.make_secure_val(username)
@@ -117,10 +122,13 @@ class LogIn(handler):
 		self.loginpw = self.request.get("password")
 		if self.loginName and self.loginpw:
 			#check if user already exists
-			query = BlogDB.Users.query(ndb.AND(BlogDB.Users.name == self.loginName)).fetch()
+			query = BlogDB.Users.query(ndb.AND(
+				BlogDB.Users.name == self.loginName)).fetch()
 			if query:
 				if not self.validPw(self.loginName,self.loginpw,query[0].password):
-					self.render("login.html",error='Username and/or password doesnot match with our records')
+					self.render("login.html",
+						error='Username and/or password doesnot match with our records'
+						)
 				else:
 					self.setCookie(self.loginName)
 					self.redirect('/welcome')
@@ -134,11 +142,11 @@ class Logout(handler):
 
 class WelcomePage(handler):
 	def get(self):
-		self.checkUser = self.evaluateCookie('user')
-		if not self.checkUser:
+		self.user = self.evaluateCookie('user')
+		if not self.user:
 			self.render("home.html")
 		else:
-			self.render("welcome.html",user=self.request.cookies.get('user').split('|')[0])
+			self.render("welcome.html",user=self.user)
 
 class BlogPage(handler):
 	def get(self):
@@ -147,7 +155,7 @@ class BlogPage(handler):
 			self.render("home.html")
 		else:
 			blogsList = []
-			name = self.request.cookies.get('user').split('|')[0]
+			name = self.checkUser
 			self.posts = BlogDB.Posts.query().order(-BlogDB.Posts.createdTime)
 			if self.posts:
 				for self.post in self.posts:
@@ -159,10 +167,14 @@ class BlogPage(handler):
 					'likes':self.post.totalLikes,
 					'unlikes': self.post.totalUnlikes,
 					'id': self.post.key.id(),
-					'isLikable': self.post.isLikable if self.post.username == name or name in self.post.likedBy else True,
-					'isUnlikable': self.post.isUnlikable if self.post.username == name or name in self.post.unlikedBy else True,
-					'isEditable' : self.post.isEditable if self.post.username == name else False,
-					'isDeletable' : self.post.isDeletable if self.post.username == name else False
+					'isLikable': self.post.isLikable if self.post.username == name
+								or name in self.post.likedBy else True,
+					'isUnlikable': self.post.isUnlikable if self.post.username == name
+								or name in self.post.unlikedBy else True,
+					'isEditable' : self.post.isEditable if self.post.username == name
+								else False,
+					'isDeletable' : self.post.isDeletable if self.post.username == name
+								else False
 					}
 					blogsList.append(self.eachPost)
 				self.render("blogPost.html",blogsList=blogsList, user={'name':name})
@@ -170,23 +182,27 @@ class BlogPage(handler):
 
 class NewBlogForm(handler):
 	def get(self):
-		self.checkUser = self.evaluateCookie('user')
-		if not self.checkUser:
+		self.user = self.evaluateCookie('user')
+		# if this methods return false
+		if not self.user:
 			self.render("home.html")
 		else:
 			self.render("newblogForm.html")
 
 	def post(self):
-		self.userName = self.request.cookies.get('user').split('|')[0]
-		self.subject = self.request.get("subject")
-		self.content = self.request.get("Content")
-		if self.userName and self.subject and self.content:
-			self.post = BlogDB.Posts(username=self.userName,
-								subject=self.subject,
-								content=self.content)
-			self.postKey = self.post.put()
-			postId = self.postKey.id()
-			self.redirect("/blog/%d" % postId)
+		self.userName = self.evaluateCookie('user')
+		if not self.userName:
+			self.render("home.html")
+		else:
+			self.subject = self.request.get("subject")
+			self.content = self.request.get("Content")
+			if self.userName and self.subject and self.content:
+				self.post = BlogDB.Posts(username=self.userName,
+									subject=self.subject,
+									content=self.content)
+				self.postKey = self.post.put()
+				postId = self.postKey.id()
+				self.redirect("/blog/%d" % postId)
 
 class NewBlog(handler):
 	def get(self):
@@ -196,7 +212,7 @@ class NewBlog(handler):
 		else:
 			url = urlparse(self.request.path)
 			newBlog = BlogDB.Posts.get_by_id(int(url[2][6:]))
-			name = self.request.cookies.get('user').split('|')[0]
+			name = self.checkUser
 			commentResults = BlogDB.Comments.query(ndb.AND(BlogDB.Comments.postId == url[2][6:])).fetch()
 			self.render("blogPostComment.html", blogsList=[
 				{
@@ -207,90 +223,121 @@ class NewBlog(handler):
 				'likes':newBlog.totalLikes,
 				'unlikes': newBlog.totalUnlikes,
 				'id': newBlog.key.id(),
-				'isLikable': newBlog.isLikable if newBlog.username == name or name in newBlog.likedBy else True,
-				'isUnlikable': newBlog.isUnlikable if newBlog.username == name or name in newBlog.unlikedBy else True,
-				'isEditable' : newBlog.isEditable if newBlog.username == name else False,
-				'isDeletable' : newBlog.isDeletable if newBlog.username == name else False
+				'isLikable': newBlog.isLikable if newBlog.username == name
+							or name in newBlog.likedBy else True,
+				'isUnlikable': newBlog.isUnlikable if newBlog.username == name
+								or name in newBlog.unlikedBy else True,
+				'isEditable' : newBlog.isEditable if newBlog.username == name
+								else False,
+				'isDeletable' : newBlog.isDeletable if newBlog.username == name
+								else False
 				}],
 				user={'name':name},
-				previousComments=[
-										{'author': comment.author,
-										'content': comment.content,
-										'id': comment.key.id(),
-										'postId': comment.postId,
-										'isEditable': comment.isEditable if comment.author == name else False,
-										'isDeletable': comment.isDeletable if comment.author == name else False
-										} for comment in commentResults])
+				previousComments = [
+					{'author': comment.author,
+					'content': comment.content,
+					'id': comment.key.id(),
+					'postId': comment.postId,
+					'isEditable': comment.isEditable if comment.author == name
+								else False,
+					'isDeletable': comment.isDeletable if comment.author == name
+									else False
+					}
+					for comment in commentResults
+					]
+			)
 
 	def post(self):
-		self.ifContentOrComment = self.request.get('submitEditedText')
-		if self.ifContentOrComment:
-			newContent = self.request.get('newPostContent')
-			url = urlparse(self.request.path)
-			blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:]))
-			blogToUpdate.content = newContent
-			blogToUpdate.put()
-			time.sleep(.1)
-			self.redirect('/blog')
+		self.user = self.evaluateCookie('user')
+		if not self.user:
+			self.render("home.html")
 		else:
-			url = urlparse(self.request.path)
-			self.postId = url[2][6:]
-			self.commentContent= self.request.get('postAComment')
-			self.comment = BlogDB.Comments(author=self.request.cookies.get('user').split('|')[0],
-								content=self.commentContent,
-								postId=self.postId)
-			self.commentKey = self.comment.put()
-			time.sleep(.1)
-			self.redirect('/blog/%d' % int(self.postId))
+			self.ifContentOrComment = self.request.get('submitEditedText')
+			if self.ifContentOrComment:
+				newContent = self.request.get('newPostContent')
+				url = urlparse(self.request.path)
+				blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:]))
+				blogToUpdate.content = newContent
+				blogToUpdate.put()
+				time.sleep(.1)
+				self.redirect('/blog')
+			else:
+				url = urlparse(self.request.path)
+				self.postId = url[2][6:]
+				self.commentContent= self.request.get('postAComment')
+				self.comment = BlogDB.Comments(author=self.user,
+									content=self.commentContent,
+									postId=self.postId)
+				self.commentKey = self.comment.put()
+				time.sleep(.1)
+				self.redirect('/blog/%d' % int(self.postId))
 
 
 class LikedPost(handler):
 	def post(self):
-		# query the post with id from url and save the new number of likes
-		#rerender the blog url to refresh the whole page
-		url = urlparse(self.request.path)
-		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-5]))
-		blogToUpdate.totalLikes = blogToUpdate.totalLikes + 1
-		blogToUpdate.likedBy[self.request.cookies.get('user').split('|')[0]] = 1
-		blogToUpdate.put()
-		time.sleep(.1)
-		self.redirect('/blog')
+		self.user = self.evaluateCookie('user')
+		if not self.user:
+			self.render("home.html")
+		else:
+			url = urlparse(self.request.path)
+			blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-5]))
+			blogToUpdate.totalLikes = blogToUpdate.totalLikes + 1
+			blogToUpdate.likedBy[self.user] = 1
+			blogToUpdate.put()
+			time.sleep(.1)
+			self.redirect('/blog')
 
 class UnlikedPost(handler):
 	def post(self):
-		url = urlparse(self.request.path)
-		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
-		blogToUpdate.totalUnlikes = blogToUpdate.totalUnlikes + 1
-		blogToUpdate.unlikedBy[self.request.cookies.get('user').split('|')[0]] = 1
-		blogToUpdate.put()
-		time.sleep(.1)
-		self.redirect('/blog')
+		self.user = self.evaluateCookie('user')
+		if not self.user:
+			self.render("home.html")
+		else:
+			url = urlparse(self.request.path)
+			blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
+			blogToUpdate.totalUnlikes = blogToUpdate.totalUnlikes + 1
+			blogToUpdate.unlikedBy[self.user] = 1
+			blogToUpdate.put()
+			time.sleep(.1)
+			self.redirect('/blog')
 
 class DeletePost(handler):
 	def post(self):
-		url = urlparse(self.request.path)
-		blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
-		blogToUpdate.key.delete()
-		time.sleep(.1)
-		self.redirect('/blog')
+		self.user = self.evaluateCookie('user')
+		if not self.user:
+			self.render("home.html")
+		else:
+			url = urlparse(self.request.path)
+			blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
+			blogToUpdate.key.delete()
+			time.sleep(.1)
+			self.redirect('/blog')
 
 class DeleteComment(handler):
 	def post(self):
-		url = urlparse(self.request.path)
-		commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-7]))
-		commentToUpdate.key.delete()
-		time.sleep(.1)
-		self.redirect('/blog/%d' % int(commentToUpdate.postId))
+		self.user = self.evaluateCookie('user')
+		if not self.user:
+			self.render("home.html")
+		else:
+			url = urlparse(self.request.path)
+			commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-7]))
+			commentToUpdate.key.delete()
+			time.sleep(.1)
+			self.redirect('/blog/%d' % int(commentToUpdate.postId))
 
 class EditComment(handler):
 	def post(self):
-		newContent = self.request.get('newCommentContent')
-		url = urlparse(self.request.path)
-		commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-5]))
-		commentToUpdate.content = newContent
-		commentToUpdate.put()
-		time.sleep(.1)
-		self.redirect('/blog/%d' % int(commentToUpdate.postId))
+		self.user = self.evaluateCookie('user')
+		if not self.user:
+			self.render("home.html")
+		else:
+			newContent = self.request.get('newCommentContent')
+			url = urlparse(self.request.path)
+			commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-5]))
+			commentToUpdate.content = newContent
+			commentToUpdate.put()
+			time.sleep(.1)
+			self.redirect('/blog/%d' % int(commentToUpdate.postId))
 
 
 
