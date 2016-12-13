@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import time
 import ast
+import json
 
 template_dir = os.path.join(os.path.dirname(__file__), 'templates')
 jinja_env = jinja2.Environment(loader=jinja2.FileSystemLoader(template_dir),
@@ -64,11 +65,16 @@ class handler(webapp2.RequestHandler):
     def evaluateCookie(self, cookieName):
         self.cookie_val = self.request.cookies.get(cookieName)
         # print(self.cookie_val)
-        ifUserValid = self.check_secure_val(self.cookie_val)
-        # print(ifUserValid)
-        if ifUserValid:
-            return self.request.cookies.get('user').split('|')[0]
+        if self.cookie_val:
+            print(self.cookie_val)
+            ifUserValid = self.check_secure_val(self.cookie_val)
+            # print(ifUserValid)
+            if ifUserValid:
+                return self.request.cookies.get('user').split('|')[0]
+            else:
+                return False
         else:
+            print("There is no cookie")
             return False
 
     def setCookie(self, username):
@@ -158,7 +164,7 @@ class WelcomePage(handler):
     def get(self):
         self.user = self.evaluateCookie('user')
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             self.render("welcome.html", user=self.user)
 
@@ -168,7 +174,7 @@ class BlogPage(handler):
     def get(self):
         self.checkUser = self.evaluateCookie('user')
         if not self.checkUser:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             blogsList = []
             name = self.checkUser
@@ -204,14 +210,14 @@ class NewBlogForm(handler):
         self.user = self.evaluateCookie('user')
         # if this methods return false
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             self.render("newblogForm.html")
 
     def post(self):
         self.userName = self.evaluateCookie('user')
         if not self.userName:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             self.subject = self.request.get("subject")
             self.content = self.request.get("Content")
@@ -229,7 +235,7 @@ class NewBlog(handler):
     def get(self):
         self.checkUser = self.evaluateCookie('user')
         if not self.checkUser:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             url = urlparse(self.request.path)
             newBlog = BlogDB.Posts.get_by_id(int(url[2][6:]))
@@ -274,17 +280,18 @@ class NewBlog(handler):
     def post(self):
         self.user = self.evaluateCookie('user')
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             self.ifContentOrComment = self.request.get('submitEditedText')
             if self.ifContentOrComment:
                 newContent = self.request.get('newPostContent')
                 url = urlparse(self.request.path)
                 blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:]))
-                blogToUpdate.content = newContent
-                blogToUpdate.put()
-                time.sleep(.1)
-                self.redirect('/blog')
+                if blogToUpdate.username == self.user:
+                    blogToUpdate.content = newContent
+                    blogToUpdate.put()
+                    time.sleep(.1)
+                    self.redirect('/blog')
             else:
                 url = urlparse(self.request.path)
                 self.postId = url[2][6:]
@@ -301,16 +308,21 @@ class LikedPost(handler):
 
     def post(self):
         self.user = self.evaluateCookie('user')
+        print(self.user)
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             url = urlparse(self.request.path)
             blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-5]))
-            blogToUpdate.totalLikes = blogToUpdate.totalLikes + 1
-            blogToUpdate.likedBy[self.user] = 1
-            blogToUpdate.put()
-            time.sleep(.1)
-            self.redirect('/blog')
+            ifAlreadyLiked = blogToUpdate.likedBy.get(self.user, 'None')
+            if ((blogToUpdate.username != self.user) and
+                    (ifAlreadyLiked == 'None')):
+                print("I am here!")
+                blogToUpdate.totalLikes = blogToUpdate.totalLikes + 1
+                blogToUpdate.likedBy[self.user] = 1
+                blogToUpdate.put()
+                time.sleep(.1)
+                self.redirect('/blog')
 
 
 class UnlikedPost(handler):
@@ -318,43 +330,50 @@ class UnlikedPost(handler):
     def post(self):
         self.user = self.evaluateCookie('user')
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             url = urlparse(self.request.path)
             blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
-            blogToUpdate.totalUnlikes = blogToUpdate.totalUnlikes + 1
-            blogToUpdate.unlikedBy[self.user] = 1
-            blogToUpdate.put()
-            time.sleep(.1)
-            self.redirect('/blog')
+            ifAlreadyUnliked = blogToUpdate.unlikedBy.get(self.user, 'None')
+            if ((blogToUpdate.username != self.user) and
+                    (ifAlreadyUnliked == 'None')):
+                blogToUpdate.totalUnlikes = blogToUpdate.totalUnlikes + 1
+                blogToUpdate.unlikedBy[self.user] = 1
+                blogToUpdate.put()
+                time.sleep(.1)
+                self.redirect('/blog')
 
 
 class DeletePost(handler):
 
     def post(self):
         self.user = self.evaluateCookie('user')
+        print(self.user)
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             url = urlparse(self.request.path)
             blogToUpdate = BlogDB.Posts.get_by_id(int(url[2][6:-7]))
-            blogToUpdate.key.delete()
-            time.sleep(.1)
-            self.redirect('/blog')
+            if blogToUpdate.username == self.user:
+                blogToUpdate.key.delete()
+                time.sleep(.1)
+                self.redirect('/blog')
 
 
 class DeleteComment(handler):
 
     def post(self):
         self.user = self.evaluateCookie('user')
+        print(self.user)
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             url = urlparse(self.request.path)
             commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-7]))
-            commentToUpdate.key.delete()
-            time.sleep(.1)
-            self.redirect('/blog/%d' % int(commentToUpdate.postId))
+            if commentToUpdate.author == self.user:
+                commentToUpdate.key.delete()
+                time.sleep(.1)
+                self.redirect('/blog/%d' % int(commentToUpdate.postId))
 
 
 class EditComment(handler):
@@ -362,15 +381,16 @@ class EditComment(handler):
     def post(self):
         self.user = self.evaluateCookie('user')
         if not self.user:
-            self.render("login.html")
+            self.redirect("/login")
         else:
             newContent = self.request.get('newCommentContent')
             url = urlparse(self.request.path)
             commentToUpdate = BlogDB.Comments.get_by_id(int(url[2][14:-5]))
-            commentToUpdate.content = newContent
-            commentToUpdate.put()
-            time.sleep(.1)
-            self.redirect('/blog/%d' % int(commentToUpdate.postId))
+            if commentToUpdate.author == self.user:
+                commentToUpdate.content = newContent
+                commentToUpdate.put()
+                time.sleep(.1)
+                self.redirect('/blog/%d' % int(commentToUpdate.postId))
 
 
 app = webapp2.WSGIApplication([
